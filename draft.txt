@@ -1,0 +1,18 @@
+[globals]
+WEBHOOK_BASE=https://a27e-83-29-67-17.ngrok-free.app
+
+[phones]          ; ← nazwę kontekstu dostajesz z pjsip.conf (endpoint.context)
+
+;--- połączenie na 100 -------------------------------------------------
+exten => 100,1,NoOp(Call to 100 from ${CALLERID(all)})
+ same  => n,Set(REQ_BODY=from=${CALLERID(num)}&to=100)
+ same  => n,Set(tmp=${CURL(${WEBHOOK_BASE}/incoming-call,post,${REQ_BODY})})
+ same  => n,Answer()
+ same  => n,Wait(5)                 ; zamień np. na Dial(PJSIP/100)
+ same  => n,Hangup()
+
+;--- hak h() uruchamiany po rozłączeniu -------------------------------
+exten => h,1,NoOp(Hangup cause=${HANGUPCAUSE})
+ same  => n,Set(REQ_BODY=from=${CALLERID(num)}&to=100&cause=${HANGUPCAUSE})
+ same  => n,Set(tmp=${CURL(${WEBHOOK_BASE}/call-status-update,post,${REQ_BODY})})
+ same  => n,Return()
